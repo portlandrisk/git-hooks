@@ -4,4 +4,21 @@ import sys, os, re
 from subprocess import check_output
 from subprocess import call
 
-print 'Hello'
+skip_branches = ['develop', 'master', 'sai-master']
+valid_prefixes = ['subtask/', 'feature/', 'release/', 'bugfix/', 'hotfix/']
+has_prefix = False
+
+# Get current branch name using symbolic reference for HEAD
+branch = check_output(['git', 'symbolic-ref', '--short', 'HEAD']).strip()
+
+if branch not in skip_branches:
+    matched_ticket_numbers = re.search(r'([A-Z]{2,4}-\d{1,4})(\/[A-Z]{2,4}-\d{1,4})?', branch)
+
+    if len(matched_ticket_numbers.groups()) == 1:
+        sys.stdout.write('[' + matched_ticket_numbers.groups()[0] + ']')
+    elif len(matched_ticket_numbers.groups()) == 2:
+        sys.stdout.write('[' + str(matched_ticket_numbers.groups()[0]) + str(matched_ticket_numbers.groups()[1]) + ']')
+
+        
+        
+    
