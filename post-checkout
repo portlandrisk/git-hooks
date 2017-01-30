@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+
+import sys, os, re
+from subprocess import check_output
+from subprocess import call
+
+def remove_invalid_branch():
+    call(['git', 'checkout', 'develop'])
+    call(['git', 'branch', '-D', branch])
+
+skip_branches = ['develop', 'master', 'sai-master']
+valid_prefixes = ['subtask/', 'feature/', 'release/', 'bugfix/', 'hotfix/']
+has_prefix = False
+
+# Get current branch name using symbolic reference for HEAD
+branch = check_output(['git', 'symbolic-ref', '--short', 'HEAD']).strip()
+
+if branch not in skip_branches:
+    # Check if checked out branch contains any valid Git Flow prefixes
+    for prefix in valid_prefixes:
+        if prefix in branch:
+            has_prefix = True
+
+    # If the branch doesn't contain a valid Git Flow prefix
+    if not has_prefix:
+        print ('New branch \'' + branch + '\' does not contain any valid Git Flow prefixes. Please try again with valid prefix (example structure \'feature/DP-XXX_feature_name\')')
+        print ('Information regarding Git Flow branch strategies and naming conventions can be found at: https://confluence.encompasshost.com/display/dev/Git+Flow')
+        remove_invalid_branch()
+    elif re.search(r'[A-Z]{2,4}-\d{1,4}', branch) is None:
+        print ('Branch name does not contain a valid JIRA ticket prefix. Please try again with valid prefix (example CORE-XXX, DP-XXX, TRUF-XXX)')
+        print ('Information regarding Git Flow branch strategies and naming conventions can be found at: https://confluence.encompasshost.com/display/dev/Git+Flow')
+        remove_invalid_branch()
