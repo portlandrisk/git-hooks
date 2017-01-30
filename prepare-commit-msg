@@ -1,9 +1,8 @@
 #!/bin/bash
 
-# This way you can customize which branches should be skipped when
-# prepending commit message. 
+# Skips these branches when prepending commit message with branch name
 if [ -z "$BRANCHES_TO_SKIP" ]; then
-  BRANCHES_TO_SKIP=(master develop test)
+  BRANCHES_TO_SKIP=(master sai-master develop)
 fi
 
 BRANCH_NAME=$(git symbolic-ref --short HEAD)
