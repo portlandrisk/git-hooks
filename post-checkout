@@ -23,7 +23,7 @@ if branch not in skip_branches:
 
     # If the branch doesn't contain a valid Git Flow prefix
     if not has_prefix:
-        print ('New branch \'' + branch + '\' does not contain any valid Git Flow prefixes. Please try again with valid prefix (example structure \'feature/DP-XXX_feature_name\')')
+        print ('New branch \'' + branch + '\' does not contain any valid Git Flow prefixes. Please try again with valid prefix (example structure \'feature/DP-XXX-feature-name\')')
         print ('Information regarding Git Flow branch strategies and naming conventions can be found at: https://confluence.encompasshost.com/display/dev/Git+Flow')
         remove_invalid_branch()
     elif re.search(r'[A-Z]{2,4}-\d{1,4}', branch) is None:
