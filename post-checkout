@@ -6,7 +6,7 @@ from subprocess import call
 
 def remove_invalid_branch():
     call(['git', 'checkout', 'develop'])
-    call(['git', 'branch', '-D', branch])
+    print ('Please remove branch with incorrect naming convention ' + branch + ' (e.g. git branch -D ' + branch + ')')
 
 skip_branches = ['develop', 'master', 'sai-master']
 valid_prefixes = ['subtask/', 'feature/', 'release/', 'bugfix/', 'hotfix/']
