@@ -27,6 +27,7 @@ fi
 quit() {
     if [ $has_unstaged_changes -ne 0 ]; then
         git apply "$patch_filename"
+        echo "Applying unstaged changes back from :" $patch_filename
         if [ $? -ne 0 ]; then
             git checkout -- .
             git apply --whitespace=nowarn --ignore-whitespace "$patch_filename"
@@ -39,19 +40,28 @@ quit() {
 # Redirect output to stderr.
 exec 1>&2
 
-for mod_file in `git status -s | grep "\.xml" | cut -d ' '  -f 3`; do
+for mod_file in `git status -s | grep -e ".*changeset.*.js" -e "mongeez.xml" | cut -d ' '  -f 2`; do
    echo $mod_file
 done
 
-files_with_extends_service_parameters=$(git diff --cached --name-only --diff-filter=ACM $against | xargs -I{} grep -i "extends ServiceParameters" -l {} | tr '\n' ' ')
+## --diff-filter
+## A - Added
+## C - Copied
+## M - Modified
 
-if [ "x${files_with_extends_service_parameters}x" != "xx" ]; then
-    echo "Cannot commit changes to service parameters without DB migration script"
-    IFS=$'\n'
-    for f in $(git diff --cached --name-only --diff-filter=ACM $against | xargs -I{} grep -i "extends ServiceParameters" -l {}); do
-        echo $f
-    done
-    quit 1
+java_files_with_extends_service_parameters=$(git diff --cached --name-only --diff-filter=ACM $against | xargs -I{} grep -i "extends ServiceParameters" -l {} --include=*.java | tr '\n' ' ')
+
+## Java files that extend the service parameters
+if [ ! -z $java_files_with_extends_service_parameters ]; then
+    ## No mongeez or changeset files were found
+    if [ -z $mod_file ]; then
+        echo "Cannot commit changes for following service parameters without DB migration script"
+        IFS=$'\n'
+        for f in $(git diff --cached --name-only --diff-filter=ACM $against | xargs -I{} grep -i "extends ServiceParameters" -l {}); do
+            echo $f
+        done
+        quit 1
+    fi
 fi
 
 quit 0
