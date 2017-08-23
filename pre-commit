@@ -1,0 +1,71 @@
+#!/bin/sh
+
+echo "Pre-commit hook started"
+
+if git rev-parse --verify HEAD >/dev/null 2>&1
+then
+    against=HEAD
+else
+    # Initial commit: diff against an empty tree object
+    against=$(git hash-object -t tree /dev/null)
+fi
+
+patch_filename=$(mktemp -t commit_hook_changes.XXXXXXX)
+git diff --exit-code --binary --ignore-submodules --no-color > "$patch_filename"
+has_unstaged_changes=$?
+
+if [ $has_unstaged_changes -ne 0 ]; then
+    # Unstaged changes have been found
+    if [ ! -f "$patch_filename" ]; then
+        echo "Failed to create a patch file"
+        exit 1
+    else
+        echo "Stashing unstaged changes in $patch_filename."
+        git checkout -- .
+    fi
+fi
+
+
+quit() {
+    if [ $has_unstaged_changes -ne 0 ]; then
+        git apply "$patch_filename"
+        echo "Applying unstaged changes back from :" $patch_filename
+        if [ $? -ne 0 ]; then
+            git checkout -- .
+            git apply --whitespace=nowarn --ignore-whitespace "$patch_filename"
+        fi
+    fi
+
+    echo "Pre-commit hook completed"
+
+    exit $1
+}
+
+# Redirect output to stderr.
+exec 1>&2
+
+for mod_file in `git status -s | grep -e ".*changeset.*.js" -e "mongeez.xml" | cut -d ' '  -f 2`; do
+   echo $mod_file
+done
+
+## --diff-filter
+## A - Added
+## C - Copied
+## M - Modified
+
+java_files_with_extends_service_parameters=$(git diff --cached --name-only --diff-filter=ACM $against | xargs -I{} grep -i "implements ServiceParameters" -l {} --include=*.java | tr '\n' ' ')
+
+## Java files that extend the service parameters
+if [ ! -z $java_files_with_extends_service_parameters ]; then
+    ## No mongeez or changeset files were found
+    if [ -z $mod_file ]; then
+        echo "Cannot commit changes for the following service parameters without DB migration script"
+        IFS=$'\n'
+        for f in $(git diff --cached --name-only --diff-filter=ACM $against | xargs -I{} grep -i "implements ServiceParameters" -l {}); do
+            echo $f
+        done
+        quit 1
+    fi
+fi
+
+quit 0
