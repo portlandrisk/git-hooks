@@ -1,5 +1,7 @@
 #!/bin/sh
 
+echo "Pre-commit hook started"
+
 if git rev-parse --verify HEAD >/dev/null 2>&1
 then
     against=HEAD
@@ -34,6 +36,8 @@ quit() {
         fi
     fi
 
+    echo "Pre-commit hook completed"
+
     exit $1
 }
 
@@ -49,15 +53,15 @@ done
 ## C - Copied
 ## M - Modified
 
-java_files_with_extends_service_parameters=$(git diff --cached --name-only --diff-filter=ACM $against | xargs -I{} grep -i "extends ServiceParameters" -l {} --include=*.java | tr '\n' ' ')
+java_files_with_extends_service_parameters=$(git diff --cached --name-only --diff-filter=ACM $against | xargs -I{} grep -i "implements ServiceParameters" -l {} --include=*.java | tr '\n' ' ')
 
 ## Java files that extend the service parameters
 if [ ! -z $java_files_with_extends_service_parameters ]; then
     ## No mongeez or changeset files were found
     if [ -z $mod_file ]; then
-        echo "Cannot commit changes for following service parameters without DB migration script"
+        echo "Cannot commit changes for the following service parameters without DB migration script"
         IFS=$'\n'
-        for f in $(git diff --cached --name-only --diff-filter=ACM $against | xargs -I{} grep -i "extends ServiceParameters" -l {}); do
+        for f in $(git diff --cached --name-only --diff-filter=ACM $against | xargs -I{} grep -i "implements ServiceParameters" -l {}); do
             echo $f
         done
         quit 1
